@@ -5,6 +5,7 @@ import autograd.numpy as np
 import autograd 
 import activationFunctions as F
 import lossFunctions as L
+import networkPrinter as printer
 import queue
 
 class NeuralNetwork:
@@ -18,9 +19,10 @@ class NeuralNetwork:
         self.gradsValues = {}
         self.momentumValues = []
         self.momentumSize = momentumSize
-    
-    def printNetwork(self):
-        print(self.paramsValues)
+
+        # additional info for displaying
+        self.layerSize = {}
+        self.biggestLayerSize = 0
     
     def addLayer(self, inputSize, outputSize, activationFunction, bias = True):
         self.numberOfLayers = self.numberOfLayers + 1
@@ -30,6 +32,15 @@ class NeuralNetwork:
             
         self.functions['F' + str(self.numberOfLayers)] = activationFunction
         self.functions['dF' + str(self.numberOfLayers)] = autograd.grad(activationFunction, 0)
+
+        # additional info for displaying
+        if (self.numberOfLayers is 1):
+            self.layerSize[0] = inputSize
+            if self.biggestLayerSize < inputSize:
+                self.biggestLayerSize = inputSize
+        self.layerSize[self.numberOfLayers] = outputSize
+        if self.biggestLayerSize < outputSize:
+                self.biggestLayerSize = outputSize
 
 
     def _singleLayerForward(self, Aprev, Wcurr, bcurr, activationFunction):
@@ -172,6 +183,9 @@ if __name__ == "__main__":
     net.addLayer(3, 1, F.sigmoid, True)
     net.setCostFunction(L.l2)
 
+    printer.initialize()
+    printer.print_network(net)
+
     X = [np.array([[0, 0]]).T, np.array([[0, 1]]).T, np.array([[1, 0]]).T, np.array([[1, 1]]).T]
     Y = [np.array([[0]]).T, np.array([[1]]).T, np.array([[1]]).T, np.array([[0]]).T]
     net.train(X, Y, epochs=100, learningRate=1, momentumRate=0.001)
@@ -179,3 +193,5 @@ if __name__ == "__main__":
     for i in X:
         result = net.forward(i)
         print(i, ' -> ', result,'\n')
+
+    input("Press Enter to continue...")
