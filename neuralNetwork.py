@@ -6,7 +6,8 @@ import autograd
 import activationFunctions as F
 import lossFunctions as L
 import networkPrinter as printer
-import queue
+import matplotlib.pyplot as plt
+import csvReader as reader
 
 class NeuralNetwork:
     def __init__(self, seed = None, momentumSize = 5):
@@ -156,42 +157,82 @@ class NeuralNetwork:
                 momentum[k] = momentum[k] / len(self.momentumValues)
         return momentum
 
-    def train(self, X, Y, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0):
+    def _trainOnce(self, X, Y, batchSize, learningRate, momentumRate):
         self.clearGradsValues()
-        for e in range(epochs):
-            err = []
-            for i in range(len(X)):
-                result = self.forward(X[i])
-                cost = self.getCostValue(result, Y[i])
-                self.backward(result, Y[i])
-                err.append(cost)
-                if batchSize == 0:
+        err = []
+        for i in range(len(X)):
+            result = self.forward(X[i])
+            cost = self.getCostValue(result, Y[i])
+            self.backward(result, Y[i])
+            err.append(cost)
+            if batchSize == 0:
+                self.update(learningRate, momentumRate)
+                self.clearGradsValues()
+            else:
+                if((i+1)%batchSize == 0):
                     self.update(learningRate, momentumRate)
                     self.clearGradsValues()
-                else:
-                    if((i+1)%batchSize == 0):
-                        self.update(learningRate, momentumRate)
-                        self.clearGradsValues()
-                    elif(i+1 == len(X)):
-                        self.update(learningRate, momentumRate)
-                        self.clearGradsValues()
-            print('Epoch: ',e+1, '\terr mean: ', np.mean(err), '\terr std:', np.std(err) )
+                elif(i+1 == len(X)):
+                    self.update(learningRate, momentumRate)
+                    self.clearGradsValues()
+        return np.mean(err), np.std(err)
 
-if __name__ == "__main__":
-    net = NeuralNetwork(momentumSize=1, seed=0)
-    net.addLayer(2, 3, F.sigmoid, False)
-    net.addLayer(3, 1, F.sigmoid, True)
-    net.setCostFunction(L.l2)
+    def train(self, X, Y, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True):
+        if showNodes or showError:
+            printer.initialize()
 
-    printer.initialize()
-    printer.print_network(net)
+        trainingError = []
+        trainingStd = []
+        for e in range(epochs):
+            mean, std = self._trainOnce(X, Y, batchSize, learningRate, momentumRate)
+            trainingError.append(mean)
+            trainingStd.append(std)
+            print('Epoch: ',e+1, '\terr mean: ', mean, '\terr std:', std)
+            
+            if showError:
+                plt.figure(1)
+                printer.print_error(trainingError)
+            
+            if showNodes: 
+                plt.figure(69)     
+                printer.print_network(self)
+            
+            if showError or showNodes:
+                printer.wait(0.01)
 
-    X = [np.array([[0, 0]]).T, np.array([[0, 1]]).T, np.array([[1, 0]]).T, np.array([[1, 1]]).T]
-    Y = [np.array([[0]]).T, np.array([[1]]).T, np.array([[1]]).T, np.array([[0]]).T]
-    net.train(X, Y, epochs=100, learningRate=1, momentumRate=0.001)
+    def validate(self, X, Y):
+        testError = []
+        for i in range(len(X)):
+            result = self.forward(X[i])
+            cost = self.getCostValue(result, Y[i])
+            testError.append(cost)
+        return np.mean(testError), np.std(testError)
 
-    for i in X:
-        result = net.forward(i)
-        print(i, ' -> ', result,'\n')
+    def trainAndValidate(self, Xtrain, Ytrain, Xvalidation, Yvalidation, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True):
+        if showNodes or showError:
+            printer.initialize()
 
-    input("Press Enter to continue...")
+        trainingError = []
+        trainingStd = []
+        validateError = []
+        validateStd = []
+
+        for e in range(epochs):
+            meanT, stdT = self._trainOnce(Xtrain, Ytrain, batchSize, learningRate, momentumRate)
+            trainingError.append(meanT)
+            trainingStd.append(stdT)
+            meatV, stdV = self.validate(Xvalidation, Yvalidation)
+            validateError.append(meatV)
+            validateStd.append(stdV)
+            if showError:
+                plt.figure(1)
+                printer.print_error(trainingError, validateError)
+            
+            if showNodes: 
+                plt.figure(69)     
+                printer.print_network(self)
+            
+            if showError or showNodes:
+                printer.wait(0.01)
+            
+                
