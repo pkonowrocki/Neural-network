@@ -43,7 +43,6 @@ class NeuralNetwork:
         if self.biggestLayerSize < outputSize:
                 self.biggestLayerSize = outputSize
 
-
     def _singleLayerForward(self, Aprev, Wcurr, bcurr, activationFunction):
         dot = np.dot(Wcurr, Aprev)
         Zcurr = np.add(dot, bcurr)
@@ -206,7 +205,7 @@ class NeuralNetwork:
             result = self.forward(X[i])
             cost = self.getCostValue(result, Y[i])
             testError.append(cost)
-        return np.mean(testError), np.std(testError)
+        return np.mean(testError), np.std(testError), testError
 
     def trainAndValidate(self, Xtrain, Ytrain, Xvalidation, Yvalidation, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True):
         if showNodes or showError:
@@ -221,7 +220,7 @@ class NeuralNetwork:
             meanT, stdT = self._trainOnce(Xtrain, Ytrain, batchSize, learningRate, momentumRate)
             trainingError.append(meanT)
             trainingStd.append(stdT)
-            meatV, stdV = self.validate(Xvalidation, Yvalidation)
+            meatV, stdV, errorV = self.validate(Xvalidation, Yvalidation)
             validateError.append(meatV)
             validateStd.append(stdV)
             if showError:
@@ -234,5 +233,47 @@ class NeuralNetwork:
             
             if showError or showNodes:
                 printer.wait(0.01)
+
+    def kFoldsTrainAndValidate(self, Xtrain, Ytrain, k = 4, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True):
+        X = []
+        Y = []
+        for _ in range(k):
+            X.append([])
+            Y.append([])
+        for i in range(len(Xtrain)):
+            X[i%k].append(Xtrain[i])
+            Y[i%k].append(Ytrain[i])
+
+        if showNodes or showError:
+            printer.initialize()
+
+        trainingError = []
+        trainingStd = []
+        validateError = []
+        validateStd = []
+
+        for e in range(epochs):
+            validationFold = 0
+            meanT = []
+            for fold in range(k):
+                if validationFold == fold:
+                    meatV, stdV, errorV = self.validate(X[fold], Y[fold])
+                    validateError.append(meatV)
+                    validateStd.append(stdV)
+                mean, stdT = self._trainOnce(X[fold], Y[fold], batchSize, learningRate, momentumRate)
+                meanT.append(mean)
             
-                
+            validationFold = (validationFold+1)%k
+            trainingError.append(np.mean(meanT))
+            trainingStd.append(stdT)
+            if showError:
+                plt.figure(1)
+                printer.print_error(trainingError, validateError)
+            
+            if showNodes: 
+                plt.figure(69)     
+                printer.print_network(self)
+            
+            if showError or showNodes:
+                printer.wait(0.01)
+        
