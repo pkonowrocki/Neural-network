@@ -38,6 +38,6 @@ def readRegressionFile(path):
         X = []
         Y = []
         for row in csv_reader:
-            X.append(np.array([[row[0], row[1]]]).T.astype(np.float))
-            Y.append(np.array([[float(row[2])]]).T)
+            X.append(np.array([[row[0]]]).T.astype(np.float))
+            Y.append(np.array([[float(row[1])]]).T)
     return X,Y

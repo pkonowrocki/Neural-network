@@ -7,8 +7,8 @@ def initialize():
     plt.ion()
 
 def _print_points(X,Y):
-    cmap_bold  = ['#FF0000', '#00FF00', '#0000FF']
     if max(Y[0].shape)==3:
+        cmap_bold  = ['#FF0000', '#00FF00', '#0000FF']
         X1 = []
         X2 = []
         X3 = []
@@ -30,6 +30,7 @@ def _print_points(X,Y):
         plt.plot(X3, Y3, c=cmap_bold[2], marker='.', linestyle = 'None')
         plt.draw()
     else:
+        cmap_bold  = ['#FF0000', '#00FF00']
         X1 = []
         Y1 = []
         X2 = []
@@ -45,14 +46,15 @@ def _print_points(X,Y):
         plt.plot(X2, Y2, c=cmap_bold[1], marker='.', linestyle = 'None')
         plt.draw()
 
-def print_classification(net, X, Y, size = 1.1, dS = 0.05):
+def print_classification(net, X, Y, size = 1.5, dS = 0.01):
+    cmap_light = []
     x_min = -size
     x_max = size
     y_min = -size
     y_max = size
     dx = dS
     dy = dS
-    cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
+    
     xx, yy = np.meshgrid(np.arange(x_min, x_max, dx), np.arange(y_min, y_max, dy))
     z = np.zeros(xx.shape)
     plt.figure(10)
@@ -62,13 +64,16 @@ def print_classification(net, X, Y, size = 1.1, dS = 0.05):
             inp = np.array([[xx[i][j], yy[i][j]]]).T
             ret = net.forward(inp)
             if(np.max(ret.shape)==3):
-                if np.argmax(Y[i])==0:
+                cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
+                if np.argmax(ret)==0:
                     ret=0
-                elif np.argmax(Y[i])==1:
+                elif np.argmax(ret)==1:
                     ret=1
                 else:
                     ret=2
+                z[i][j] = ret
             else:
+                cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA'])
                 z[i][j] = ret
     
     plt.pcolormesh(xx, yy, z, cmap=cmap_light)
