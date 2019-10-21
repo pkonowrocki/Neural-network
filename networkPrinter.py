@@ -6,6 +6,19 @@ from matplotlib.colors import ListedColormap
 def initialize():
     plt.ion()
 
+def print_regression(net, X, Y, size = 5, dx = 0.1):
+    plt.figure(15)
+    plt.ion()
+    plt.clf()
+    plt.plot(np.reshape(X, -1), np.reshape(Y, -1), marker='.', linestyle = 'None')
+    x = np.arange(-size, size, dx)
+    y = []
+    for i in x:
+        j = net.forward(np.array([[i]]))
+        y.append(j)
+    plt.plot(np.reshape(x, -1),np.reshape(y, -1))
+    plt.show()
+
 def _print_points(X,Y):
     if max(Y[0].shape)==3:
         cmap_bold  = ['#FF0000', '#00FF00', '#0000FF']
@@ -46,7 +59,7 @@ def _print_points(X,Y):
         plt.plot(X2, Y2, c=cmap_bold[1], marker='.', linestyle = 'None')
         plt.draw()
 
-def print_classification(net, X, Y, size = 1.5, dS = 0.01):
+def print_classification(net, X, Y, size = 1.5, dS = 0.1):
     cmap_light = []
     x_min = -size
     x_max = size
@@ -58,6 +71,7 @@ def print_classification(net, X, Y, size = 1.5, dS = 0.01):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, dx), np.arange(y_min, y_max, dy))
     z = np.zeros(xx.shape)
     plt.figure(10)
+    plt.clf()
     _print_points(X,Y)
     for i in range(xx.shape[0]):
         for j in range(xx.shape[1]):
@@ -126,6 +140,7 @@ def print_edges(G, net, W, a, b):
 
 def print_error(error):
     plt.figure(1)
+    plt.ion()
     plt.clf()
     plt.plot(error)
     plt.xlabel("Epochs", fontsize = 10)
@@ -135,6 +150,7 @@ def print_error(error):
 
 def print_error(errorTraining, errorValidate):
     plt.figure(1)
+    plt.ion()
     plt.clf()
     plt.plot(errorTraining, label='training error')
     plt.plot(errorValidate, label='validation error')

@@ -234,7 +234,7 @@ class NeuralNetwork:
             if showError or showNodes:
                 printer.wait(0.01)
 
-    def kFoldsTrainAndValidate(self, Xtrain, Ytrain, k = 4, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True):
+    def kFoldsTrainAndValidate(self, Xtrain, Ytrain, k = 4, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True, print = None, showEvery = 1):
         X = []
         Y = []
         for _ in range(k):
@@ -266,14 +266,18 @@ class NeuralNetwork:
             validationFold = (validationFold+1)%k
             trainingError.append(np.mean(meanT))
             trainingStd.append(stdT)
-            if showError:
+
+            if showError and (e+1)%showEvery==0:
                 plt.figure(1)
                 printer.print_error(trainingError, validateError)
             
-            if showNodes: 
+            if showNodes and (e+1)%showEvery==0: 
                 plt.figure(69)     
                 printer.print_network(self)
             
-            if showError or showNodes:
+            if print is not None and (e+1)%showEvery==0:
+                print()
+
+            if (showError or showNodes or print is not None) and (e+1)%showEvery==0:
                 printer.wait(0.01)
         
