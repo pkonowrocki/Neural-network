@@ -1,5 +1,3 @@
-# https://towardsdatascience.com/lets-code-a-neural-network-in-plain-numpy-ae7e74410795
-#import numpy as np
 import time
 import autograd.numpy as np
 import autograd 

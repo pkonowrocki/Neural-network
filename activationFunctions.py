@@ -27,3 +27,10 @@ def softmax(x):
 
 def square(x):
     return x**2
+
+def cube(x):
+    return x**3
+
+def polly(x):
+    powers = np.arange(1, x.shape[0]+1, 1).reshape(x.shape)
+    return  np.power(x, powers)

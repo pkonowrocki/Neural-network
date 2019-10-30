@@ -6,6 +6,23 @@ from matplotlib.colors import ListedColormap
 def initialize():
     plt.ion()
 
+def print_accuracy(net, X, Y):
+    positive = 0
+    if max(Y[0].shape)==3:
+        for i in range(len(X)):
+            ans = net.forward(X[i])
+            if(np.argmax(ans)==np.argmax(Y[i])):
+                positive += 1
+    else:
+        for i in range(len(X)):
+            ans = net.forward(X[i])
+            if(ans >= 0.5 and Y[i] >= 0.5):
+                positive += 1
+            elif(ans < 0.5 and Y[i] < 0.5):
+                positive += 1
+    print('Accuracy: ', float(positive/len(X)))    
+
+
 def print_regression(net, X, Y, size = 5, dx = 0.1):
     plt.figure(15)
     plt.ion()
