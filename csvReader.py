@@ -64,6 +64,14 @@ def readmnistAsOneLineTest(path):
             X.append((np.array([row[0:784]]).T.astype(float))/255)
     return X
 
+def readmnistAsOneLinePCA(path):
+    with open(path) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        X = []
+        for row in csv_reader:
+            X.append((np.array([row[0:784]]).T.astype(float)))
+    return X
+
 def saveMnistResult(path, Y):
     with open(path, 'w', newline='') as csvfile:
         fields = ['ImageId', 'Label']

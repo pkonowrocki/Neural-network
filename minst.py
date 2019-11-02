@@ -4,6 +4,8 @@ import neuralNetwork as nn
 import activationFunctions as F
 import lossFunctions as L
 import networkPrinter as printer
+import numpy as np
+import matplotlib.pyplot as plt
 
 def _test(e, Xtest, net, name):
     Ytest = []
@@ -32,55 +34,96 @@ def test0():
         showEvery=5,
         name = name)
 
-def test1():
-    name = 'test1'
+def reduceMNIST(n):
     Xtrain, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
-    Xtrain = Xtrain[1:3]
-    Ytrain = Ytrain[1:3]
-    print('Training set ready, size: ', len(Xtrain))
-    net = nn.NeuralNetwork(momentumSize=0, seed=1)
-    net.addLayer(784, 200, F.sigmoid, False)
-    net.addLayer(200, 80, F.sigmoid, False)
-    net.addLayer(80,10, F.softmax, False)
-    net.setCostFunction(L.l2)
-    print('Starting training...')
     Xtest = reader.readmnistAsOneLineTest('mnist\\test.csv')
+    from sklearn.decomposition import PCA
+    # pca = PCA(n_components = 784)
+    # Xtrain = np.array(Xtrain).reshape((42000, 784))
+    # pca = pca.fit(Xtrain)
+    # cum_var_explained = np.cumsum(pca.explained_variance_)
+    # plt.figure(10000)
+    # plt.plot(cum_var_explained)
+    # plt.show()
+
+    pca = PCA(n_components = n)
+    Xtrain = pca.fit_transform(np.array(Xtrain).reshape((42000, 784)))
+    np.savetxt('mnist\\trainPCA'+str(n)+'.csv', np.round(Xtrain, 5), delimiter=',')
+    Xtest = np.array(Xtest).reshape((28000, 784))
+    Xtest = np.round(pca.transform(Xtest), 5)
+    np.savetxt('mnist\\testPCA'+str(n)+'.csv', Xtest, delimiter=',')
+
+def test1():
+    _, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
+    Xtrain = reader.readmnistAsOneLinePCA('mnist\\trainPCA300.csv')
+    Xtest = reader.readmnistAsOneLinePCA('mnist\\testPCA300.csv')
+    name = 'test1'
+    print('Training set ready, size: ', len(Xtrain))
+    net = nn.NeuralNetwork(momentumSize=0)
+    net.addLayer(300, 10, F.softmax, True)
+    net.setCostFunction(L.crossEntropy)
+    print('Starting training...')
     net.kFoldsTrainAndValidate(Xtrain, Ytrain,
-        k=2, 
+        k=6, 
         epochs=100, 
         learningRate=1e-2,
         batchSize=100,
         showError=True, 
         showNodes=False,
-        #print=  lambda e: _test(e, Xtest, net, name),
+        print=  lambda e: _test(e, Xtest, net, name),
         showEvery=10,
-        name = None)
+        name = name)
 
 def test2():
-    name = 'test2'
-    Xtrain, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
+    _, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
+    Xtrain = reader.readmnistAsOneLinePCA('mnist\\trainPCA300.csv')
+    Xtest = reader.readmnistAsOneLinePCA('mnist\\testPCA300.csv')
+    name = '2test'
     print('Training set ready, size: ', len(Xtrain))
     net = nn.NeuralNetwork(momentumSize=0)
-    net.addLayer(784, 200, F.sigmoid, False)
-    net.addLayer(200, 80, F.tanh, False)
-    net.addLayer(80,10, F.softmax, False)
-    net.setCostFunction(L.l2)
+    net.addLayer(300, 100, F.LReLU, True)
+    net.addLayer(100, 10, F.softmax, True)
+    net.setCostFunction(L.crossEntropy)
     print('Starting training...')
-    Xtest = reader.readmnistAsOneLineTest('mnist\\test.csv')
-    net.kFoldsTrainAndValidate(Xtrain, Ytrain, 
-        k=100, 
-        epochs=3, 
-        learningRate=1e-4,
-        batchSize=10,
-        showError=False, 
+    net.kFoldsTrainAndValidate(Xtrain, Ytrain,
+        k=6, 
+        epochs=100, 
+        learningRate=1e-2,
+        batchSize=100,
+        showError=True, 
         showNodes=False,
         print=  lambda e: _test(e, Xtest, net, name),
-        showEvery=1,
+        showEvery=10,
+        name = name)
+    
+def test3():
+    _, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
+    Xtrain = reader.readmnistAsOneLinePCA('mnist\\trainPCA300.csv')
+    Xtest = reader.readmnistAsOneLinePCA('mnist\\testPCA300.csv')
+    name = '3test'
+    print('Training set ready, size: ', len(Xtrain))
+    net = nn.NeuralNetwork(momentumSize=0)
+    net.addLayer(300, 150, F.tanh, True)
+    net.addLayer(150, 70, F.LReLU, True)
+    net.addLayer(70, 10, F.softmax, True)
+    net.setCostFunction(L.crossEntropy)
+    print('Starting training...')
+    net.kFoldsTrainAndValidate(Xtrain, Ytrain,
+        k=6, 
+        epochs=100, 
+        learningRate=1e-2,
+        batchSize=100,
+        showError=True, 
+        showNodes=False,
+        print=  lambda e: _test(e, Xtest, net, name),
+        showEvery=10,
         name = name)
     
 
 if __name__ == "__main__":
-    test0()
+    # test0()
+    # reduceMNIST(300)
     # test1()
-    # test2()
+    test2()
+    test3()
     input('Click enter')

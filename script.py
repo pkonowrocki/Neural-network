@@ -8,19 +8,17 @@ def classification3Classes():
     Xtrain, Ytrain = reader.readClassification3ClassesFile('classification\data.three_gauss.train.100.csv')
     Xtest, Ytest = reader.readClassification3ClassesFile('classification\data.three_gauss.test.100.csv')
     net = nn.NeuralNetwork(momentumSize=0, seed=0)
-    net.addLayer(2, 10, F.linear, True)
-    net.addLayer(10, 7, F.linear, True)
-    net.addLayer(7, 5, F.linear, True)
-    net.addLayer(5, 3, F.sigmoid, False)
-    net.setCostFunction(L.l1)
+    net.addLayer(2, 20, F.LReLU, False)
+    net.addLayer(20, 3, F.softmax, False)
+    net.setCostFunction(L.crossEntropy)
     #define own validation and train sets
     # net.trainAndValidate(Xtrain[20:], Ytrain[20:], Xtrain[0:20], Ytrain[0:20], epochs=10, learningRate=0.1, showError=True, showNodes=False)
     #automatic k-folds validation method
     net.kFoldsTrainAndValidate(Xtrain, Ytrain, k=5, epochs=50, learningRate=0.1,
         showError=True, 
         showNodes=True,
-        print=lambda : printer.print_classification(net, Xtrain, Ytrain, size=1.5, dS=0.005),
-        showEvery=50)
+        print=lambda e : printer.print_classification(net, Xtrain, Ytrain, size=1.5, dS=0.1),
+        showEvery=5)
     mean, std, error = net.validate(Xtest, Ytest)
     print(mean, std)
     printer.print_accuracy(net, Xtest, Ytest)
@@ -64,7 +62,7 @@ def regression():
     print(mean, std)
 
 if __name__ == "__main__":
-    # classification3Classes()
-    classification2Classes()
+    classification3Classes()
+    # classification2Classes()
     # regression()
     input('Click enter')
