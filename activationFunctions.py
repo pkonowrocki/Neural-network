@@ -21,9 +21,9 @@ def swish(x):
     return x / (1.+np.exp(-x))
 
 def softmax(x):
-    x = x - x.max(axis=0, keepdims=True)
-    y = np.exp(x)
-    return y / y.sum(axis=0, keepdims=True)
+    m = np.max(x)
+    y = np.exp(x-m)
+    return y / y.sum()
 
 def square(x):
     return x**2

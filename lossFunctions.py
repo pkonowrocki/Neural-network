@@ -7,5 +7,7 @@ def l2(yhat, y):
     return np.sum((y-yhat)**2)/yhat.shape[0]
 
 def crossEntropy(yhat, y):
-    t1 = y*np.log(yhat)
-    return -np.sum(t1)/yhat.shape[0]
+    l = np.log(yhat)
+    t1 = np.multiply(y,l)
+    ret = -np.sum(t1)/yhat.shape[0]
+    return ret

@@ -7,6 +7,7 @@ import networkPrinter as printer
 import matplotlib.pyplot as plt
 import csvReader as reader
 
+
 class NeuralNetwork:
     def __init__(self, seed = None, momentumSize = 5):
         if(seed is not None):
@@ -25,12 +26,12 @@ class NeuralNetwork:
     
     def addLayer(self, inputSize, outputSize, activationFunction, bias = True):
         self.numberOfLayers = self.numberOfLayers + 1
-        self.paramsValues['W' + str(self.numberOfLayers)] = np.random.rand(outputSize, inputSize)*2 - 1
+        self.paramsValues['W' + str(self.numberOfLayers)] = np.random.normal(0, 1, (outputSize, inputSize))
         if (bias):
             self.paramsValues['b' + str(self.numberOfLayers)] = np.random.rand(outputSize, 1)*2 - 1
             
         self.functions['F' + str(self.numberOfLayers)] = activationFunction
-        self.functions['dF' + str(self.numberOfLayers)] = autograd.grad(activationFunction, 0)
+        self.functions['dF' + str(self.numberOfLayers)] = autograd.jacobian(activationFunction, 0)
 
         # additional info for displaying
         if (self.numberOfLayers is 1):
@@ -41,10 +42,11 @@ class NeuralNetwork:
         if self.biggestLayerSize < outputSize:
                 self.biggestLayerSize = outputSize
 
-    def _singleLayerForward(self, Aprev, Wcurr, bcurr, activationFunction):
+    def _singleLayerForward(self, Aprev, Wcurr, bcurr, activationFunction, i):
         dot = np.dot(Wcurr, Aprev)
         Zcurr = np.add(dot, bcurr)
-        return activationFunction(Zcurr), Zcurr
+        a = activationFunction(Zcurr)
+        return a, Zcurr
 
     def forward(self, X):
         Acurr = X
@@ -57,20 +59,17 @@ class NeuralNetwork:
                 bcurr = self.paramsValues['b' + str(idx)]
             else:
                 bcurr = np.zeros((Wcurr.shape[0], 1))
-            Acurr, Zcurr = self._singleLayerForward(Aprev, Wcurr, bcurr, activationFunction)
+            Acurr, Zcurr = self._singleLayerForward(Aprev, Wcurr, bcurr, activationFunction, idx)
             
             self.memory['A' + str(idx - 1)] = Aprev
             self.memory['Z' + str(idx)] = Zcurr
+        
         return Acurr
     
-    def _singleLayerBackward(self, dAcurr, Wcurr, bcurr, Zcurr, Aprev, backwardActivationFunc):
+    def _singleLayerBackward(self, dAcurr, Wcurr, bcurr, Zcurr, Aprev, backwardActivationFunc, i):
         m = Aprev.shape[1]
-
-        dZ = list()
-        for z in list(Zcurr):
-            dZ.append(backwardActivationFunc(z))
-        dZ = np.array(dZ)
-        dZcurr = dZ*dAcurr
+        b = backwardActivationFunc(Zcurr.reshape(-1))
+        dZcurr = np.dot(b, dAcurr)
         dWcurr = np.dot(dZcurr, Aprev.T) / m
         dbcurr = np.sum(dZcurr, axis = 1, keepdims = True) / m
         dAprev = np.dot(Wcurr.T, dZcurr)
@@ -81,8 +80,13 @@ class NeuralNetwork:
         m = Y.shape[1]
         Y = Y.reshape(Yhat.shape)
 
+        # if(self.costFunction == L.crossEntropy):
+        #     # dAprev = self.dL(Yhat, Y)
+        #     dAprev = Yhat - Y
+        # else:
+        #     dAprev = self.dL(Yhat, Y)
+        
         dAprev = self.dL(Yhat, Y)
-
         for i in reversed(list(range(self.numberOfLayers))):
             idx = i+1
 
@@ -96,7 +100,7 @@ class NeuralNetwork:
             else:
                 bcurr = np.zeros((Wcurr.shape[0], 1))
 
-            dAprev, dWcurr, dbcurr = self._singleLayerBackward(dAcurr, Wcurr, bcurr, Zcurr, Aprev, self.functions['dF'+str(idx)])
+            dAprev, dWcurr, dbcurr = self._singleLayerBackward(dAcurr, Wcurr, bcurr, Zcurr, Aprev, self.functions['dF'+str(idx)], idx)
 
             self.gradsValues['dW'+str(idx)] += dWcurr
             
@@ -111,7 +115,7 @@ class NeuralNetwork:
 
     def setCostFunction(self, costFunction):
         self.costFunction = costFunction
-        self.dL = autograd.grad(self.costFunction, 0)
+        self.dL = autograd.jacobian(self.costFunction, 0)
 
     def getCostValue(self, Yhat, Y):
         cost = self.costFunction(Yhat, Y)
@@ -160,6 +164,7 @@ class NeuralNetwork:
         for i in range(len(X)):
             result = self.forward(X[i])
             cost = self.getCostValue(result, Y[i])
+
             self.backward(result, Y[i])
             err.append(cost)
             if batchSize == 0:
@@ -232,7 +237,7 @@ class NeuralNetwork:
             if showError or showNodes:
                 printer.wait(0.01)
 
-    def kFoldsTrainAndValidate(self, Xtrain, Ytrain, k = 4, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True, print = None, showEvery = 1):
+    def kFoldsTrainAndValidate(self, Xtrain, Ytrain, k = 4, epochs = 100, batchSize = 0, learningRate = 0.1, momentumRate = 0, showNodes = False, showError = True, print = None, showEvery = 1, name = None):
         X = []
         Y = []
         for _ in range(k):
@@ -268,14 +273,13 @@ class NeuralNetwork:
             if showError and (e+1)%showEvery==0:
                 plt.figure(1)
                 printer.print_error(trainingError, validateError)
+                if name is not None:
+                    plt.savefig(name+str(e)+'.png')
             
             if showNodes and (e+1)%showEvery==0: 
                 plt.figure(69)     
                 printer.print_network(self)
             
             if print is not None and (e+1)%showEvery==0:
-                print()
-
-            if (showError or showNodes or print is not None) and (e+1)%showEvery==0:
-                printer.wait(0.01)
+                print(e)
         

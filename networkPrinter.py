@@ -8,7 +8,7 @@ def initialize():
 
 def print_accuracy(net, X, Y):
     positive = 0
-    if max(Y[0].shape)==3:
+    if max(Y[0].shape)>=3:
         for i in range(len(X)):
             ans = net.forward(X[i])
             if(np.argmax(ans)==np.argmax(Y[i])):
