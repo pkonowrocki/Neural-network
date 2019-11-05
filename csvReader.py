@@ -50,7 +50,7 @@ def readmnistAsOneLineTraining(path):
         Y = []
         for row in csv_reader:
             y = np.zeros((10,1))
-            y[int(row[0])-1,0] = 1
+            y[int(row[0]),0] = 1
             Y.append(y)
             X.append((np.array([row[1:785]]).T.astype(float))/255)
     return X,Y

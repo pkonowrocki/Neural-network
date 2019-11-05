@@ -38,20 +38,24 @@ def reduceMNIST(n):
     Xtrain, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
     Xtest = reader.readmnistAsOneLineTest('mnist\\test.csv')
     from sklearn.decomposition import PCA
-    # pca = PCA(n_components = 784)
-    # Xtrain = np.array(Xtrain).reshape((42000, 784))
-    # pca = pca.fit(Xtrain)
-    # cum_var_explained = np.cumsum(pca.explained_variance_)
-    # plt.figure(10000)
-    # plt.plot(cum_var_explained)
-    # plt.show()
+    pca = PCA(n_components = 784)
+    Xtrain = np.array(Xtrain).reshape((42000, 784))
+    pca = pca.fit(Xtrain)
+    cum_var_explained = np.cumsum(pca.explained_variance_)/np.sum(pca.explained_variance_)
+    plt.figure(10000)
+    plt.title("Wykres wytłumaczonej wariancji zbioru")
+    plt.ylabel("Część wytłumaczonej wariancji")
+    plt.xlabel("Liczba wymiarów")
+    plt.grid(True)
+    plt.plot(cum_var_explained)
+    plt.show()
 
-    pca = PCA(n_components = n)
-    Xtrain = pca.fit_transform(np.array(Xtrain).reshape((42000, 784)))
-    np.savetxt('mnist\\trainPCA'+str(n)+'.csv', np.round(Xtrain, 5), delimiter=',')
-    Xtest = np.array(Xtest).reshape((28000, 784))
-    Xtest = np.round(pca.transform(Xtest), 5)
-    np.savetxt('mnist\\testPCA'+str(n)+'.csv', Xtest, delimiter=',')
+    # pca = PCA(n_components = n)
+    # Xtrain = pca.fit_transform(np.array(Xtrain).reshape((42000, 784)))
+    # np.savetxt('mnist\\trainPCA'+str(n)+'.csv', np.round(Xtrain, 5), delimiter=',')
+    # Xtest = np.array(Xtest).reshape((28000, 784))
+    # Xtest = np.round(pca.transform(Xtest), 5)
+    # np.savetxt('mnist\\testPCA'+str(n)+'.csv', Xtest, delimiter=',')
 
 def test1():
     _, Ytrain = reader.readmnistAsOneLineTraining('mnist\\train.csv')
@@ -65,13 +69,13 @@ def test1():
     print('Starting training...')
     net.kFoldsTrainAndValidate(Xtrain, Ytrain,
         k=6, 
-        epochs=100, 
+        epochs=2, 
         learningRate=1e-2,
         batchSize=100,
         showError=True, 
         showNodes=False,
         print=  lambda e: _test(e, Xtest, net, name),
-        showEvery=10,
+        showEvery=1,
         name = name)
 
 def test2():
@@ -93,7 +97,7 @@ def test2():
         showError=True, 
         showNodes=False,
         print=  lambda e: _test(e, Xtest, net, name),
-        showEvery=10,
+        showEvery=50,
         name = name)
     
 def test3():
@@ -116,14 +120,14 @@ def test3():
         showError=True, 
         showNodes=False,
         print=  lambda e: _test(e, Xtest, net, name),
-        showEvery=10,
+        showEvery=25,
         name = name)
     
 
 if __name__ == "__main__":
     # test0()
-    # reduceMNIST(300)
+    reduceMNIST(300)
     # test1()
-    test2()
-    test3()
+    # test3()
+    # test2()
     input('Click enter')
